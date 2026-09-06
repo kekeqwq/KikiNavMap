@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:KikiNavMap}",
+            "name": "Debug KikiNavMap",
+            "target": "KikiNavMap",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug KikiNavMap"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:KikiNavMap}",
+            "name": "Release KikiNavMap",
+            "target": "KikiNavMap",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release KikiNavMap"
+        }
+    ]
+}
