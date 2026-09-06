@@ -14,8 +14,10 @@ public struct MainView: View {
 
             // 2. Floating Top Toolbar
             VStack {
-                LiquidGlassToolbar()
-                    .padding(.top, 14)
+                LiquidGlassGroup(spacing: 12) {
+                    LiquidGlassToolbar()
+                }
+                .padding(.top, 14)
                 Spacer()
             }
 
@@ -26,8 +28,10 @@ public struct MainView: View {
                     Spacer()
 
                     // Bottom Route Preview Pill
-                    RoutePreviewBar()
-                        .padding(.bottom, 14)
+                    LiquidGlassGroup(spacing: 8) {
+                        RoutePreviewBar()
+                    }
+                    .padding(.bottom, 14)
 
                     Spacer()
                 }
@@ -39,43 +43,29 @@ public struct MainView: View {
                 HStack(spacing: 8) {
                     Spacer()
 
-                    // About Button
-                    Button(action: { appState.isAboutPresented = true }) {
-                        Image(systemName: "info.circle")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(.ultraThinMaterial)
-                                    .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 4)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .help("About KikiNavMap")
+                    LiquidGlassGroup(spacing: 8) {
+                        // About Button
+                        Button(action: { appState.isAboutPresented = true }) {
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.primary)
+                                .padding(10)
+                        }
+                        .liquidGlass(in: RoundedRectangle(cornerRadius: 14, style: .continuous), interactive: true)
+                        .buttonStyle(.plain)
+                        .help("About KikiNavMap")
 
-                    // Settings Button
-                    Button(action: { appState.isSettingsPresented = true }) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(.ultraThinMaterial)
-                                    .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 4)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                            )
+                        // Settings Button
+                        Button(action: { appState.isSettingsPresented = true }) {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.primary)
+                                .padding(10)
+                        }
+                        .liquidGlass(in: RoundedRectangle(cornerRadius: 14, style: .continuous), interactive: true)
+                        .buttonStyle(.plain)
+                        .help("Settings & AIRAC Import")
                     }
-                    .buttonStyle(.plain)
-                    .help("Settings & AIRAC Import")
                     .padding(.trailing, 16)
                 }
                 .padding(.bottom, 14)

@@ -78,13 +78,10 @@ public struct AirportSearchField: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(.ultraThinMaterial)
-        )
+        .liquidGlass(in: RoundedRectangle(cornerRadius: 12, style: .continuous), interactive: true)
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(isFocused ? iconColor.opacity(0.8) : Color.white.opacity(0.2), lineWidth: 1)
+                .stroke(isFocused ? iconColor.opacity(0.8) : Color.clear, lineWidth: 1.5)
         )
         // Inline Non-Intrusive Floating Dropdown (Does NOT steal focus!)
         .overlay(alignment: .topLeading) {
@@ -128,15 +125,7 @@ public struct AirportSearchField: View {
                 }
                 .padding(6)
                 .frame(width: 280)
-                .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(.regularMaterial)
-                        .shadow(color: .black.opacity(0.25), radius: 14, x: 0, y: 6)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                )
+                .liquidGlass(in: RoundedRectangle(cornerRadius: 12, style: .continuous), interactive: true)
                 .offset(y: 36)
                 .zIndex(200)
             }

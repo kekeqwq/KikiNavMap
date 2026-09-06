@@ -80,15 +80,7 @@ public struct LiquidGlassToolbar: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 8)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-        )
+        .liquidGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous), interactive: true)
     }
 
     private func copyRoute() {
@@ -128,14 +120,6 @@ public struct RoutePreviewBar: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 6)
-        .background(
-            Capsule(style: .continuous)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 4)
-        )
-        .overlay(
-            Capsule(style: .continuous)
-                .stroke(Color.white.opacity(0.25), lineWidth: 1)
-        )
+        .liquidGlass(in: Capsule(style: .continuous), interactive: false)
     }
 }
