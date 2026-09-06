@@ -1,5 +1,5 @@
 {
-  description = "KikiNavMap macOS — Minimalist Flight Planner, Swift, macOS 27 Liquid Glass";
+  description = "KikiNavMap macOS — Minimalist Flight Planner, Swift, Liquid Glass UI";
 
   nixConfig = {
     sandbox = false;
@@ -27,7 +27,7 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          triple = if system == "aarch64-darwin" then "arm64-apple-macos27.0" else "x86_64-apple-macos27.0";
+          targetArch = if system == "aarch64-darwin" then "arm64" else "x86_64";
           pkg = pkgs.stdenv.mkDerivation {
             pname = "kikinavmap";
             version = "1.0.0";
@@ -36,32 +36,45 @@
             buildPhase = ''
               runHook preBuild
               unset NIX_CFLAGS_COMPILE NIX_LDFLAGS CC CXX MACOSX_DEPLOYMENT_TARGET
-              unset SDKROOT
-              if [ -d /Applications/Xcode-beta.app/Contents/Developer ]; then
-                export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
-              elif [ -d /Applications/Xcode.app/Contents/Developer ]; then
-                export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
-              else
-                export DEVELOPER_DIR=$(/usr/bin/xcode-select -p)
-              fi
-              SDK=$(/usr/bin/xcrun --sdk macosx --show-sdk-path)
-              SWIFT=$(/usr/bin/xcrun -f swiftc)
-              test -n "$SDK" -a -x "$SWIFT"
-              echo "kikinavmap: DEVELOPER_DIR=$DEVELOPER_DIR"
-              echo "kikinavmap: SDK=$SDK"
-              echo "kikinavmap: SWIFT=$SWIFT"
+              unset SDKROOT DEVELOPER_DIR
 
-              EXTRA_ARGS=()
-              if [ -d "$DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins" ]; then
-                EXTRA_ARGS+=("-plugin-path" "$DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins")
+              # Detect developer directory and plugins
+              XCODE_DIR=""
+              for candidate in "$DEVELOPER_DIR" "$(/usr/bin/xcode-select -p 2>/dev/null)" $(ls -d /Applications/Xcode*.app/Contents/Developer 2>/dev/null) "/Applications/Xcode.app/Contents/Developer"; do
+                if [ -n "$candidate" ] && [ -d "$candidate" ] && [ -d "$candidate/Platforms/MacOSX.platform" ]; then
+                  XCODE_DIR="$candidate"
+                  break
+                fi
+              done
+
+              EXTRA_FLAGS=""
+              if [ -n "$XCODE_DIR" ]; then
+                export DEVELOPER_DIR="$XCODE_DIR"
+                SWIFT="$XCODE_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+                SDK="$XCODE_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+                PLUGIN_DIR="$XCODE_DIR/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins"
+                if [ -d "$PLUGIN_DIR" ]; then
+                  EXTRA_FLAGS="-plugin-path $PLUGIN_DIR"
+                fi
+              elif [ -x "/Library/Developer/CommandLineTools/usr/bin/swiftc" ]; then
+                export DEVELOPER_DIR="/Library/Developer/CommandLineTools"
+                SWIFT="/Library/Developer/CommandLineTools/usr/bin/swiftc"
+                SDK="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+              else
+                SDK=$(/usr/bin/xcrun --sdk macosx --show-sdk-path 2>/dev/null || echo "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk")
+                SWIFT=$(/usr/bin/xcrun -f swiftc 2>/dev/null || command -v swiftc 2>/dev/null || echo "/usr/bin/swiftc")
               fi
+
+              echo "kikinavmap build: SDK=$SDK"
+              echo "kikinavmap build: SWIFT=$SWIFT"
+              echo "kikinavmap build: EXTRA_FLAGS=$EXTRA_FLAGS"
 
               mkdir -p .build/cache
               "$SWIFT" -O -parse-as-library \
-                -sdk "$SDK" -target ${triple} \
+                -sdk "$SDK" -target ${targetArch}-apple-macos14.0 \
                 -Xfrontend -disable-sandbox \
                 -module-cache-path .build/cache \
-                "''${EXTRA_ARGS[@]}" \
+                $EXTRA_FLAGS \
                 -o kikinavmap \
                 $(find Sources/KikiNavMap -name "*.swift") \
                 -framework SwiftUI -framework AppKit -framework MapKit \
@@ -80,6 +93,7 @@
               if command -v codesign >/dev/null 2>&1; then
                 codesign --force --deep --sign - "$app" || true
               fi
+
               cat > $out/bin/kikinavmap <<EOFS
 #!/bin/sh
 set -e
