@@ -41,8 +41,10 @@ public struct AirportSearchField: View {
                 .textCase(.uppercase)
                 .frame(minWidth: 90, maxWidth: 140)
                 .onChange(of: text) { _, newValue in
-                    if suppressSuggestions {
+                    if suppressSuggestions || !isFocused {
                         suppressSuggestions = false
+                        isShowingSuggestions = false
+                        suggestions = []
                         return
                     }
                     updateSuggestions(for: newValue)
@@ -85,7 +87,7 @@ public struct AirportSearchField: View {
         )
         // Inline Non-Intrusive Floating Dropdown (Does NOT steal focus!)
         .overlay(alignment: .topLeading) {
-            if isShowingSuggestions && !suggestions.isEmpty {
+            if isFocused && isShowingSuggestions && !suggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 2) {
                     ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, apt in
                         Button(action: { choose(apt) }) {
@@ -133,6 +135,11 @@ public struct AirportSearchField: View {
     }
 
     private func updateSuggestions(for query: String) {
+        guard isFocused else {
+            suggestions = []
+            isShowingSuggestions = false
+            return
+        }
         let clean = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard clean.count >= 1 else {
             suggestions = []

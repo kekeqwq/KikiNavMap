@@ -37,46 +37,74 @@ public struct MainView: View {
                 }
             }
 
-            // 4. Floating Bottom-Right Buttons (About & Settings)
+            // 4. Floating Bottom-Right Button (Settings)
             VStack {
                 Spacer()
                 HStack(spacing: 8) {
                     Spacer()
 
-                    LiquidGlassGroup(spacing: 8) {
-                        // About Button
-                        Button(action: { appState.isAboutPresented = true }) {
-                            Image(systemName: "info.circle")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.primary)
-                                .padding(10)
+                    Button(action: {
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+                            appState.isSettingsPresented = true
                         }
-                        .liquidGlass(in: RoundedRectangle(cornerRadius: 14, style: .continuous), interactive: true)
-                        .buttonStyle(.plain)
-                        .help("About KikiNavMap")
-
-                        // Settings Button
-                        Button(action: { appState.isSettingsPresented = true }) {
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.primary)
-                                .padding(10)
-                        }
-                        .liquidGlass(in: RoundedRectangle(cornerRadius: 14, style: .continuous), interactive: true)
-                        .buttonStyle(.plain)
-                        .help("Settings & AIRAC Import")
+                    }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                            .padding(8)
                     }
+                    .nativeGlassButton(shape: .circle)
+                    .help("Settings & AIRAC Import")
                     .padding(.trailing, 16)
                 }
                 .padding(.bottom, 14)
             }
+
+            // 5. In-Window Floating Modal Dialogs (Native Liquid Glass Overlays - No AppKit Sheet Borders)
+            if appState.isSettingsPresented || appState.isAboutPresented || appState.isAutoImportPresented {
+                Color.black.opacity(0.35)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
+                            appState.isSettingsPresented = false
+                            appState.isAboutPresented = false
+                            appState.isAutoImportPresented = false
+                        }
+                    }
+
+                if appState.isSettingsPresented {
+                    SettingsSheet()
+                        .transition(.scale(scale: 0.95).combined(with: .opacity))
+                        .zIndex(100)
+                }
+
+                if appState.isAboutPresented {
+                    AboutSheet()
+                        .transition(.scale(scale: 0.95).combined(with: .opacity))
+                        .zIndex(100)
+                }
+
+                if appState.isAutoImportPresented {
+                    AutoFlightImportSheet()
+                        .transition(.scale(scale: 0.95).combined(with: .opacity))
+                        .zIndex(100)
+                }
+            }
         }
         .frame(minWidth: 900, minHeight: 600)
-        .sheet(isPresented: $appState.isSettingsPresented) {
-            SettingsSheet()
-        }
-        .sheet(isPresented: $appState.isAboutPresented) {
-            AboutSheet()
+        .animation(.spring(response: 0.28, dampingFraction: 0.85), value: appState.isSettingsPresented)
+        .animation(.spring(response: 0.28, dampingFraction: 0.85), value: appState.isAboutPresented)
+        .animation(.spring(response: 0.28, dampingFraction: 0.85), value: appState.isAutoImportPresented)
+        .onKeyPress(.escape) {
+            if appState.isSettingsPresented || appState.isAboutPresented || appState.isAutoImportPresented {
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
+                    appState.isSettingsPresented = false
+                    appState.isAboutPresented = false
+                    appState.isAutoImportPresented = false
+                }
+                return .handled
+            }
+            return .ignored
         }
         .task {
             await navData.loadData()

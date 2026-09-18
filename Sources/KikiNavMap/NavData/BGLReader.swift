@@ -164,8 +164,8 @@ public final class BGLReader: Sendable {
                             rCount += 1
                         }
                     }
-                } else if parseWaypoints && secType == 0x22 {
-                    // Waypoint section
+                } else if parseWaypoints && (secType == 0x22 || secType == 0x3D || secType == 0x13 || secType == 0x3E || secType == 0x17 || secType == 0x3F) {
+                    // Navigation Fixes, VORs, and NDBs section
                     for subIdx in 0..<numSub {
                         let currentSub = subOffset + subIdx * subSize
                         let numRecs = Int(ptr.load(fromByteOffset: currentSub + 4, as: UInt32.self))
@@ -181,14 +181,26 @@ public final class BGLReader: Sendable {
                             let bodyOffset = curOffset + 6
                             let bodyLen = recSize - 6
 
-                            if recId == 0x0108 && bodyLen >= 22 { // MSFS 2024 Waypoint
-                                let lonX = ptr.load(fromByteOffset: bodyOffset + 2, as: Int32.self)
-                                let latY = ptr.load(fromByteOffset: bodyOffset + 6, as: Int32.self)
-                                let icaoU64 = ptr.load(fromByteOffset: bodyOffset + 14, as: UInt64.self)
+                            if (recId == 0x0108 || recId == 0x010A) && bodyLen >= 22 { // MSFS 2024 Waypoint / NDB
+                                let lonX = ptr.loadUnaligned(fromByteOffset: bodyOffset + 2, as: Int32.self)
+                                let latY = ptr.loadUnaligned(fromByteOffset: bodyOffset + 6, as: Int32.self)
+                                let icaoU64 = ptr.loadUnaligned(fromByteOffset: bodyOffset + 14, as: UInt64.self)
                                 let ident = Self.intToIcao(icaoU64, numChars: 8, bitShift: 6)
 
-                                // Strict requirement: 5-letter fix only!
-                                if Waypoint.isValidFiveLetterIdent(ident) {
+                                if Waypoint.isValidNavIdent(ident) {
+                                    parsedWaypoints.append(Waypoint(
+                                        id: ident,
+                                        latitude: Self.intToLatY(latY),
+                                        longitude: Self.intToLonX(lonX)
+                                    ))
+                                }
+                            } else if recId == 0x0109 && bodyLen >= 26 { // MSFS 2024 VOR
+                                let lonX = ptr.loadUnaligned(fromByteOffset: bodyOffset + 2, as: Int32.self)
+                                let latY = ptr.loadUnaligned(fromByteOffset: bodyOffset + 6, as: Int32.self)
+                                let icaoU64 = ptr.loadUnaligned(fromByteOffset: bodyOffset + 18, as: UInt64.self)
+                                let ident = Self.intToIcao(icaoU64, numChars: 8, bitShift: 6)
+
+                                if Waypoint.isValidNavIdent(ident) {
                                     parsedWaypoints.append(Waypoint(
                                         id: ident,
                                         latitude: Self.intToLatY(latY),
@@ -196,12 +208,38 @@ public final class BGLReader: Sendable {
                                     ))
                                 }
                             } else if recId == 0x0022 && bodyLen >= 18 { // Standard Waypoint
-                                let lonX = ptr.load(fromByteOffset: bodyOffset + 2, as: Int32.self)
-                                let latY = ptr.load(fromByteOffset: bodyOffset + 6, as: Int32.self)
-                                let icaoU32 = ptr.load(fromByteOffset: bodyOffset + 14, as: UInt32.self)
+                                let lonX = ptr.loadUnaligned(fromByteOffset: bodyOffset + 2, as: Int32.self)
+                                let latY = ptr.loadUnaligned(fromByteOffset: bodyOffset + 6, as: Int32.self)
+                                let icaoU32 = ptr.loadUnaligned(fromByteOffset: bodyOffset + 14, as: UInt32.self)
                                 let ident = Self.intToIcao32(icaoU32, numChars: 5, bitShift: 5)
 
-                                if Waypoint.isValidFiveLetterIdent(ident) {
+                                if Waypoint.isValidNavIdent(ident) {
+                                    parsedWaypoints.append(Waypoint(
+                                        id: ident,
+                                        latitude: Self.intToLatY(latY),
+                                        longitude: Self.intToLonX(lonX)
+                                    ))
+                                }
+                            } else if recId == 0x0013 && bodyLen >= 26 { // Standard VOR
+                                let lonX = ptr.loadUnaligned(fromByteOffset: bodyOffset + 2, as: Int32.self)
+                                let latY = ptr.loadUnaligned(fromByteOffset: bodyOffset + 6, as: Int32.self)
+                                let icaoU32 = ptr.loadUnaligned(fromByteOffset: bodyOffset + 22, as: UInt32.self)
+                                let ident = Self.intToIcao32(icaoU32, numChars: 5, bitShift: 5)
+
+                                if Waypoint.isValidNavIdent(ident) {
+                                    parsedWaypoints.append(Waypoint(
+                                        id: ident,
+                                        latitude: Self.intToLatY(latY),
+                                        longitude: Self.intToLonX(lonX)
+                                    ))
+                                }
+                            } else if recId == 0x0017 && bodyLen >= 22 { // Standard NDB
+                                let lonX = ptr.loadUnaligned(fromByteOffset: bodyOffset + 2, as: Int32.self)
+                                let latY = ptr.loadUnaligned(fromByteOffset: bodyOffset + 6, as: Int32.self)
+                                let icaoU32 = ptr.loadUnaligned(fromByteOffset: bodyOffset + 18, as: UInt32.self)
+                                let ident = Self.intToIcao32(icaoU32, numChars: 5, bitShift: 5)
+
+                                if Waypoint.isValidNavIdent(ident) {
                                     parsedWaypoints.append(Waypoint(
                                         id: ident,
                                         latitude: Self.intToLatY(latY),
@@ -238,7 +276,8 @@ public final class BGLReader: Sendable {
                     allAirports[apt.id] = apt
                 }
                 for wpt in parsed.waypoints {
-                    allWaypoints[wpt.id] = wpt
+                    let key = "\(wpt.id)_\(Int(round(wpt.latitude * 100)))_\(Int(round(wpt.longitude * 100)))"
+                    allWaypoints[key] = wpt
                 }
             }
         }

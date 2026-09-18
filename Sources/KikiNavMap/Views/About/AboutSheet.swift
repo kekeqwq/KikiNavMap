@@ -9,14 +9,29 @@ public struct AboutSheet: View {
 
     public var body: some View {
         VStack(spacing: 16) {
+            // Header with top-right Close
+            HStack {
+                Spacer()
+                Button(action: {
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
+                        AppState.shared.isAboutPresented = false
+                    }
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .padding(5)
+                }
+                .nativeGlassButton(shape: .circle)
+            }
+            .padding(.bottom, -12)
+
             // App Icon
             if let iconImage = loadAppIcon() {
                 Image(nsImage: iconImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 96, height: 96)
-                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 6)
+                    .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
             } else {
                 Image(systemName: "airplane.circle.fill")
                     .resizable()
@@ -29,7 +44,7 @@ public struct AboutSheet: View {
                 Text("KikiNavMap")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
 
-                Text("Version 1.0.0 (macOS 27 Native)")
+                Text("Version 1.1.0 (macOS 27 Native)")
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
                     .foregroundColor(.secondary)
             }
@@ -41,11 +56,10 @@ public struct AboutSheet: View {
                     .frame(width: 7, height: 7)
                 Text(navData.statusMessage)
                     .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                    .foregroundColor(.primary)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(Capsule().fill(Color.primary.opacity(0.06)))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 5)
+            .liquidGlass(in: Capsule(), interactive: false)
 
             // Description
             Text("Minimalist flight plan creation and airway routing tool for virtual aviators. Built with pure Swift, native Apple Maps rendering, Liquid Glass UI, and high-speed BGL navigation data decoding.")
@@ -55,6 +69,7 @@ public struct AboutSheet: View {
                 .padding(.horizontal, 16)
 
             Divider()
+                .opacity(0.4)
 
             // Copyright & License
             VStack(spacing: 3) {
@@ -68,33 +83,40 @@ public struct AboutSheet: View {
             }
 
             // GitHub Button & Dismiss
-            HStack(spacing: 12) {
+            HStack(spacing: 14) {
                 Button(action: {
                     if let url = URL(string: "https://github.com/kekeqwq/KikiNavMap") {
                         NSWorkspace.shared.open(url)
                     }
                 }) {
-                    HStack(spacing: 5) {
+                    HStack(spacing: 6) {
                         Image(systemName: "link")
-                            .font(.system(size: 10, weight: .bold))
-                        Text("GitHub Repository")
                             .font(.system(size: 11, weight: .semibold))
+                        Text("GitHub")
+                            .font(.system(size: 12, weight: .semibold))
                     }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                .nativeGlassButton(shape: .roundedRectangle(radius: 12))
 
-                Button("Close") {
-                    dismiss()
+                Button(action: {
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
+                        AppState.shared.isAboutPresented = false
+                    }
+                }) {
+                    Text("Close")
+                        .font(.system(size: 12, weight: .semibold))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 4)
                 }
-                .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
+                .nativeGlassButton(prominent: false, shape: .roundedRectangle(radius: 12))
             }
             .padding(.top, 4)
         }
-        .padding(24)
+        .padding(26)
         .frame(width: 420)
+        .liquidGlassModalPanel(cornerRadius: 24)
     }
 
     private func loadAppIcon() -> NSImage? {

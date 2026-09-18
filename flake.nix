@@ -30,7 +30,7 @@
           targetArch = if system == "aarch64-darwin" then "arm64" else "x86_64";
           pkg = pkgs.stdenv.mkDerivation {
             pname = "kikinavmap";
-            version = "1.0.0";
+            version = "1.1.0";
             src = lib.cleanSource ./.;
             dontUseNixBuildInputsCompiler = true;
             buildPhase = ''

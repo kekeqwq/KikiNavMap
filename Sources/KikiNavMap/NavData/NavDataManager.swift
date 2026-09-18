@@ -33,6 +33,10 @@ public final class NavDataManager: ObservableObject {
     }
 
     private var waypointsCacheURL: URL {
+        navDataCacheDirectory.appendingPathComponent("waypoints_v2.json")
+    }
+
+    private var legacyWaypointsCacheURL: URL {
         navDataCacheDirectory.appendingPathComponent("waypoints5.json")
     }
 
@@ -107,11 +111,18 @@ public final class NavDataManager: ObservableObject {
         if fileManager.fileExists(atPath: waypointsCacheURL.path),
            let data = try? Data(contentsOf: waypointsCacheURL),
            let list = try? JSONDecoder().decode([Waypoint].self, from: data) {
-            // Filter strictly valid 5-letter alphabetic fixes
-            let valid = list.filter { Waypoint.isValidFiveLetterIdent($0.id) }
+            let valid = list.filter { Waypoint.isValidNavIdent($0.id) }
             self.waypoints5 = valid
             self.kdTree.build(waypoints: valid)
             loadedWpt = true
+        } else if fileManager.fileExists(atPath: legacyWaypointsCacheURL.path),
+                  let data = try? Data(contentsOf: legacyWaypointsCacheURL),
+                  let list = try? JSONDecoder().decode([Waypoint].self, from: data) {
+            let valid = list.filter { Waypoint.isValidNavIdent($0.id) }
+            self.waypoints5 = valid
+            self.kdTree.build(waypoints: valid)
+            loadedWpt = true
+            saveWaypointsToCache()
         }
 
         if fileManager.fileExists(atPath: cycleCacheURL.path),
@@ -122,7 +133,7 @@ public final class NavDataManager: ObservableObject {
         if loadedApt || loadedWpt {
             self.isLoaded = true
             let prefix = airacCycle.isEmpty ? "AIRAC Active" : "AIRAC \(airacCycle) Active"
-            self.statusMessage = "\(prefix): \(airports.count) airports, \(waypoints5.count) 5-letter fixes"
+            self.statusMessage = "\(prefix): \(airports.count) airports, \(waypoints5.count) fixes & VORs"
             return true
         }
         return false
@@ -183,15 +194,16 @@ public final class NavDataManager: ObservableObject {
 
         self.airports = parsed.airports
         self.airportMap = Dictionary(uniqueKeysWithValues: parsed.airports.map { ($0.id, $0) })
-        self.waypoints5 = parsed.waypoints
-        self.kdTree.build(waypoints: parsed.waypoints)
+        let validWaypoints = parsed.waypoints.filter { Waypoint.isValidNavIdent($0.id) }
+        self.waypoints5 = validWaypoints
+        self.kdTree.build(waypoints: validWaypoints)
 
         saveAirportsToCache()
         saveWaypointsToCache()
 
         self.isLoaded = true
         let prefix = airacCycle.isEmpty ? "AIRAC Active" : "AIRAC \(airacCycle) Active"
-        self.statusMessage = "\(prefix): \(airports.count) airports, \(waypoints5.count) 5-letter fixes"
+        self.statusMessage = "\(prefix): \(airports.count) airports, \(waypoints5.count) fixes & VORs"
         self.isLoading = false
     }
 

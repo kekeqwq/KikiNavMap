@@ -38,44 +38,45 @@ public struct LiquidGlassToolbar: View {
                 .frame(height: 18)
                 .padding(.horizontal, 2)
 
+            // Auto Flight Import Button
+            Button(action: {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+                    appState.isAutoImportPresented = true
+                }
+            }) {
+                HStack(spacing: 5) {
+                    Image(systemName: "airplane.circle")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("Auto Flight")
+                        .font(.system(size: 11, weight: .semibold))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+            }
+            .nativeGlassButton(shape: .roundedRectangle(radius: 12))
+            .help("Import real-world flight by flight number & date")
+
             // Copy Route Button
             Button(action: copyRoute) {
-                HStack(spacing: 4) {
+                HStack(spacing: 5) {
                     Image(systemName: hasCopied ? "checkmark" : "doc.on.doc")
                         .font(.system(size: 11, weight: .semibold))
                     Text(hasCopied ? "Copied!" : "Copy Route")
                         .font(.system(size: 11, weight: .semibold))
                 }
                 .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .foregroundColor(hasCopied ? .green : .primary)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(hasCopied ? Color.green.opacity(0.15) : Color.blue.opacity(0.12))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(hasCopied ? Color.green.opacity(0.4) : Color.blue.opacity(0.3), lineWidth: 1)
-                )
+                .padding(.vertical, 5)
             }
-            .buttonStyle(.plain)
+            .nativeGlassButton(shape: .roundedRectangle(radius: 12))
 
             // Clear Button
             Button(action: { appState.clearRoute() }) {
                 Image(systemName: "trash")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.red)
-                    .padding(7)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.red.opacity(0.12))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(Color.red.opacity(0.3), lineWidth: 1)
-                    )
+                    .padding(6)
             }
-            .buttonStyle(.plain)
+            .nativeGlassButton(shape: .circle)
+            .foregroundColor(.red)
             .help("Clear Hand-drawn Route")
         }
         .padding(.horizontal, 12)

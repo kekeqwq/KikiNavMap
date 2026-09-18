@@ -80,4 +80,19 @@ public struct GeodesicPath: Sendable {
 
         return result
     }
+
+    /// Computes the initial bearing (forward azimuth) from point A to point B in degrees (0..<360)
+    public static func initialBearing(from start: CLLocationCoordinate2D, to end: CLLocationCoordinate2D) -> Double {
+        let lat1 = start.latitude * .pi / 180.0
+        let lon1 = start.longitude * .pi / 180.0
+        let lat2 = end.latitude * .pi / 180.0
+        let lon2 = end.longitude * .pi / 180.0
+
+        let dLon = lon2 - lon1
+        let y = sin(dLon) * cos(lat2)
+        let x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
+        let radians = atan2(y, x)
+        let degrees = radians * 180.0 / .pi
+        return (degrees + 360.0).truncatingRemainder(dividingBy: 360.0)
+    }
 }

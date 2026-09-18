@@ -12,6 +12,13 @@ struct KikiNavMapApp: App {
         }
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1200, height: 800)
+        .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About KikiNavMap") {
+                    AppState.shared.isAboutPresented = true
+                }
+            }
+        }
     }
 }
 
@@ -22,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.titlebarAppearsTransparent = true
             window.isMovableByWindowBackground = true
             window.styleMask.insert(.fullSizeContentView)
+            window.initialFirstResponder = nil
         }
     }
 

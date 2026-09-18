@@ -247,4 +247,70 @@ public final class AppState: ObservableObject {
     public func removeRoutePoint(id: UUID) {
         routePoints.removeAll(where: { $0.id == id })
     }
+
+    // MARK: - Real Flight Auto-Import
+    @Published public var isAutoImportPresented: Bool = false
+
+    /// Automatically applies imported real-world flight:
+    /// 1. Sets origin & destination airport in AppState (auto-populating the UI fields)
+    /// 2. Compresses & fits the radar coordinates into 15~30 standard navigation waypoints
+    /// 3. Populates routePoints, enabling seamless subsequent manual fine-tuning
+    public func applyImportedFlight(
+        originICAO: String,
+        destICAO: String,
+        coordinates: [CLLocationCoordinate2D]
+    ) {
+        let navData = NavDataManager.shared
+
+        // 1. Resolve Origin Airport
+        if let apt = navData.airportMap[originICAO.uppercased()] {
+            self.selectOrigin(apt)
+        } else if let firstCoord = coordinates.first {
+            let meta = AirportMetadata.shared.lookup(originICAO)
+            let fallbackApt = Airport(
+                id: originICAO.uppercased(),
+                iata: meta?.i ?? "",
+                name: (meta?.n.isEmpty == false) ? meta!.n : originICAO.uppercased(),
+                city: meta?.c ?? "",
+                latitude: firstCoord.latitude,
+                longitude: firstCoord.longitude,
+                elevationMeters: 0
+            )
+            self.selectOrigin(fallbackApt)
+        } else {
+            self.originInputText = originICAO.uppercased()
+        }
+
+        // 2. Resolve Destination Airport
+        if let apt = navData.airportMap[destICAO.uppercased()] {
+            self.selectDestination(apt)
+        } else if let lastCoord = coordinates.last {
+            let meta = AirportMetadata.shared.lookup(destICAO)
+            let fallbackApt = Airport(
+                id: destICAO.uppercased(),
+                iata: meta?.i ?? "",
+                name: (meta?.n.isEmpty == false) ? meta!.n : destICAO.uppercased(),
+                city: meta?.c ?? "",
+                latitude: lastCoord.latitude,
+                longitude: lastCoord.longitude,
+                elevationMeters: 0
+            )
+            self.selectDestination(fallbackApt)
+        } else {
+            self.destinationInputText = destICAO.uppercased()
+        }
+
+        // 3. Clear existing manual points and fit real-world track
+        let origCoord = self.originAirport.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
+        let destCoord = self.destinationAirport.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
+
+        let fittedPoints = snappingEngine.fitRealWorldFlightTrack(
+            coordinates,
+            originCoord: origCoord,
+            destCoord: destCoord,
+            using: navData.kdTree
+        )
+
+        self.routePoints = fittedPoints
+    }
 }

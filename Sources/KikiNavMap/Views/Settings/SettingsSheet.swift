@@ -21,12 +21,18 @@ public struct SettingsSheet: View {
                     .font(.headline)
                     .fontWeight(.bold)
                 Spacer()
-                Button("Done") {
-                    dismiss()
+                Button(action: {
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
+                        appState.isSettingsPresented = false
+                    }
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .padding(5)
                 }
-                .keyboardShortcut(.defaultAction)
+                .nativeGlassButton(shape: .circle)
             }
-            .padding(.bottom, 4)
+            .padding(.bottom, 2)
 
             // Status Banner
             HStack(spacing: 8) {
@@ -42,16 +48,14 @@ public struct SettingsSheet: View {
                         .scaleEffect(0.6)
                 }
             }
-            .padding(8)
-            .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.primary.opacity(0.04))
-            )
+            .padding(10)
+            .liquidGlassCard(cornerRadius: 12)
 
             Divider()
+                .opacity(0.4)
 
             // 1. Unified AIRAC Navdata Import
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("AIRAC Navigation Data (One-Click Import)")
                     .font(.subheadline)
                     .fontWeight(.bold)
@@ -60,56 +64,65 @@ public struct SettingsSheet: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Import AIRAC Cycle Folder")
                             .font(.system(size: 12, weight: .semibold))
-                        Text("Select your AIRAC cycle folder (e.g. data/2606). Scans all airports and 5-letter waypoints automatically.")
+                        Text("Select your AIRAC cycle folder (e.g. data/2606). Scans all airports and waypoints automatically.")
                             .font(.system(size: 10))
                             .foregroundColor(.secondary)
                     }
                     Spacer()
-                    Button("Select Folder...") {
-                        selectAIRACFolder()
+                    Button(action: { selectAIRACFolder() }) {
+                        Text("Select Folder...")
+                            .font(.system(size: 11, weight: .semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
+                    .nativeGlassButton(shape: .roundedRectangle(radius: 12))
                 }
                 .padding(10)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
+                .liquidGlassCard(cornerRadius: 12)
 
                 Text("Data is cached to: ~/Library/Caches/KikiNavMap/NavData/")
                     .font(.system(size: 10, design: .monospaced))
                     .foregroundColor(.secondary)
+                    .padding(.horizontal, 4)
             }
 
             Divider()
+                .opacity(0.4)
 
             // 2. Flight Plan & Map Options
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text("Route & Map Options")
                     .font(.subheadline)
                     .fontWeight(.bold)
 
-                Toggle("Include Airport ICAO in Copied Route", isOn: $appState.includeAirportInCopy)
-                    .font(.system(size: 12))
+                VStack(alignment: .leading, spacing: 10) {
+                    Toggle("Include Airport ICAO in Copied Route", isOn: $appState.includeAirportInCopy)
+                        .font(.system(size: 12))
 
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Hand-Draw Snapping Radius:")
-                            .font(.system(size: 12))
-                        Spacer()
-                        Text("\(Int(appState.snappingRadiusNM)) nm")
-                            .font(.system(size: 12, weight: .bold, design: .monospaced))
-                            .foregroundColor(.accentColor)
-                    }
-                    Slider(value: $appState.snappingRadiusNM, in: 15...120, step: 5)
-                        .onChange(of: appState.snappingRadiusNM) { _, newValue in
-                            appState.snappingEngine.snappingRadiusNauticalMiles = newValue
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("Hand-Draw Snapping Radius:")
+                                .font(.system(size: 12))
+                            Spacer()
+                            Text("\(Int(appState.snappingRadiusNM)) nm")
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                .foregroundColor(.accentColor)
                         }
-                }
+                        Slider(value: $appState.snappingRadiusNM, in: 15...120, step: 5)
+                            .onChange(of: appState.snappingRadiusNM) { _, newValue in
+                                appState.snappingEngine.snappingRadiusNauticalMiles = newValue
+                            }
+                    }
 
-                Toggle("Enhanced Country Borders (Apple Maps Style)", isOn: $appState.showCountryBorders)
-                    .font(.system(size: 12))
+                    Toggle("Enhanced Country Borders (Apple Maps Style)", isOn: $appState.showCountryBorders)
+                        .font(.system(size: 12))
+                }
+                .padding(12)
+                .liquidGlassCard(cornerRadius: 12)
             }
 
             Divider()
+                .opacity(0.4)
 
             // 3. Cache Management
             HStack {
@@ -117,18 +130,22 @@ public struct SettingsSheet: View {
                     Text("Clear All Cache")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.red)
-                    Text("Clears imported airports, 5-letter waypoints, and cached data.")
+                    Text("Clears imported airports, waypoints, and cached data.")
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                Button("Clear All Cache") {
-                    showClearAlert = true
+                Button(action: { showClearAlert = true }) {
+                    Text("Clear All Cache")
+                        .font(.system(size: 11, weight: .semibold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
-                .controlSize(.small)
+                .nativeGlassButton(shape: .roundedRectangle(radius: 12))
+                .foregroundColor(.red)
             }
+            .padding(10)
+            .liquidGlassCard(cornerRadius: 12)
             .confirmationDialog(
                 "Are you sure you want to clear all cache?",
                 isPresented: $showClearAlert,
@@ -143,8 +160,9 @@ public struct SettingsSheet: View {
                 Text("This will remove all cached airports and waypoints from ~/Library/Caches/KikiNavMap.")
             }
         }
-        .padding(20)
-        .frame(width: 480)
+        .padding(24)
+        .frame(width: 500)
+        .liquidGlassModalPanel(cornerRadius: 24)
     }
 
     private func selectAIRACFolder() {
