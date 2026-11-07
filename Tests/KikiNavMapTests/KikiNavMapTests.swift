@@ -1,17 +1,17 @@
-import XCTest
+import Testing
 import CoreLocation
 @testable import KikiNavMap
 
-final class KikiNavMapTests: XCTestCase {
+struct KikiNavMapTests {
     static func assertTrue(_ condition: Bool, _ message: String = "") {
-        XCTAssertTrue(condition, message)
+        #expect(condition, Comment(rawValue: message))
     }
 
     static func assertEqual<T: Equatable>(_ a: T, _ b: T, _ message: String = "") {
-        XCTAssertEqual(a, b, message)
+        #expect(a == b, Comment(rawValue: message))
     }
 
-    @MainActor
+    @Test @MainActor
     func testAll() {
         print("--- Starting KikiNavMap Unit Tests ---")
         Self.testCoordinateFix()

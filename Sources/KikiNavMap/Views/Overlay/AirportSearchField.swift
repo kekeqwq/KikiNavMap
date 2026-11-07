@@ -8,10 +8,10 @@ public struct AirportSearchField: View {
     let onSelect: (Airport) -> Void
 
     @ObservedObject private var navData = NavDataManager.shared
-    @State private var isShowingSuggestions: Bool = false
-    @State private var suggestions: [Airport] = []
-    @State private var highlightedIndex: Int = 0
-    @State private var suppressSuggestions: Bool = false
+    @ViewState private var isShowingSuggestions: Bool = false
+    @ViewState private var suggestions: [Airport] = []
+    @ViewState private var highlightedIndex: Int = 0
+    @ViewState private var suppressSuggestions: Bool = false
     @FocusState private var isFocused: Bool
 
     public init(

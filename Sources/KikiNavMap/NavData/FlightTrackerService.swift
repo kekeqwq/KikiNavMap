@@ -306,7 +306,8 @@ public actor FlightTrackerService {
                 var coords: [CLLocationCoordinate2D] = []
                 coords.reserveCapacity(trackPoints.count)
                 for pt in trackPoints {
-                    if let lat = pt["latitude"] as? Double, let lon = pt["longitude"] as? Double {
+                    if let lat = pt["latitude"] as? Double, let lon = pt["longitude"] as? Double,
+                       Self.isValidCoordinate(latitude: lat, longitude: lon) {
                         coords.append(CLLocationCoordinate2D(latitude: lat, longitude: lon))
                     }
                 }
@@ -318,9 +319,12 @@ public actor FlightTrackerService {
                     return (orig, dest, coords)
                 }
             }
+            // A playback failure is not KML. Do not request the same JSON URL
+            // a second time and silently treat it as an empty FlightAware track.
+            throw URLError(.cannotParseResponse)
         }
 
-        // Fallback or FlightAware KML endpoint
+        // FlightAware KML endpoint
         var request = URLRequest(url: trackURL)
         request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", forHTTPHeaderField: "User-Agent")
 
@@ -350,7 +354,8 @@ public actor FlightTrackerService {
             guard match.numberOfRanges >= 3 else { continue }
             let lonStr = nsKml.substring(with: match.range(at: 1))
             let latStr = nsKml.substring(with: match.range(at: 2))
-            if let lon = Double(lonStr), let lat = Double(latStr) {
+            if let lon = Double(lonStr), let lat = Double(latStr),
+               isValidCoordinate(latitude: lat, longitude: lon) {
                 coords.append(CLLocationCoordinate2D(latitude: lat, longitude: lon))
             }
         }
@@ -366,6 +371,12 @@ public actor FlightTrackerService {
             }
         }
 
+        guard coords.count >= 2 else { throw URLError(.cannotParseResponse) }
         return (origin, dest, coords)
+    }
+
+    private static func isValidCoordinate(latitude: Double, longitude: Double) -> Bool {
+        latitude.isFinite && longitude.isFinite
+            && (-90...90).contains(latitude) && (-180...180).contains(longitude)
     }
 }

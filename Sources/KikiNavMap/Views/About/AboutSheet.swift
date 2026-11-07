@@ -44,7 +44,7 @@ public struct AboutSheet: View {
                 Text("KikiNavMap")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
 
-                Text("Version 1.1.0 (macOS 27 Native)")
+                Text("Version 1.1.1 (macOS 27 Native)")
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
                     .foregroundColor(.secondary)
             }

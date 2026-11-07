@@ -4,9 +4,8 @@ import AppKit
 public struct SettingsSheet: View {
     @ObservedObject var appState: AppState = .shared
     @ObservedObject var navData: NavDataManager = .shared
-    @Environment(\.dismiss) private var dismiss
 
-    @State private var showClearAlert = false
+    @ViewState private var showClearAlert = false
 
     public init() {}
 

@@ -3,14 +3,13 @@ import CoreLocation
 
 public struct AutoFlightImportSheet: View {
     @ObservedObject var appState: AppState = .shared
-    @Environment(\.dismiss) private var dismiss
 
-    @State private var flightNumberInput: String = ""
-    @State private var selectedDate: Date = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
-    @State private var isSearching: Bool = false
-    @State private var isImporting: Bool = false
-    @State private var errorMessage: String? = nil
-    @State private var schedules: [TrackedFlightSchedule] = []
+    @ViewState private var flightNumberInput: String = ""
+    @ViewState private var selectedDate: Date = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
+    @ViewState private var isSearching: Bool = false
+    @ViewState private var isImporting: Bool = false
+    @ViewState private var errorMessage: String? = nil
+    @ViewState private var schedules: [TrackedFlightSchedule] = []
 
     public init() {}
 
@@ -160,7 +159,9 @@ public struct AutoFlightImportSheet: View {
         .liquidGlassModalPanel(cornerRadius: 24)
     }
 
+    @MainActor
     private func searchSchedules() async {
+        guard !isSearching, !isImporting else { return }
         let rawIdent = flightNumberInput.trimmingCharacters(in: .whitespaces)
         guard !rawIdent.isEmpty else { return }
 
@@ -198,15 +199,17 @@ public struct AutoFlightImportSheet: View {
         isSearching = false
     }
 
+    @MainActor
     private func importSchedule(_ schedule: TrackedFlightSchedule) async {
+        guard !isSearching, !isImporting else { return }
         isImporting = true
+        defer { isImporting = false }
         errorMessage = nil
 
         do {
             let result = try await FlightTrackerService.shared.fetchTrackCoordinates(from: schedule.kmlURL)
-            guard !result.coordinates.isEmpty else {
+            guard result.coordinates.count >= 2 else {
                 errorMessage = "Track contains no radar points."
-                isImporting = false
                 return
             }
 
@@ -224,12 +227,13 @@ public struct AutoFlightImportSheet: View {
             withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
                 appState.isAutoImportPresented = false
             }
-            dismiss()
+            // This is an in-window overlay, not a presented SwiftUI sheet.
+            // Environment dismiss would close the containing WindowGroup window;
+            // AppDelegate then terminates the app when its last window closes.
         } catch {
             errorMessage = "Failed to download track: \(error.localizedDescription)"
         }
 
-        isImporting = false
     }
 }
 

@@ -12,7 +12,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-macOS%2027.0+-000000?logo=apple&logoColor=white" alt="macOS 27" />
-  <img src="https://img.shields.io/badge/Release-v1.1.0-4CAF50?logo=apple&logoColor=white" alt="v1.1.0" />
+  <img src="https://img.shields.io/badge/Release-v1.1.1-4CAF50?logo=apple&logoColor=white" alt="v1.1.1" />
   <img src="https://img.shields.io/badge/Language-Swift%206-FA7343?logo=swift&logoColor=white" alt="Swift 6" />
   <img src="https://img.shields.io/badge/Build-Nix%20Flake-5277C3?logo=nixos&logoColor=white" alt="Nix Flake" />
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="License: GPL-3.0" />
@@ -75,26 +75,38 @@
 
 ## 🚀 Building & Running
 
-### Using Nix Flake (Recommended)
+### Nix-only toolchain (Apple Silicon, macOS 27+)
+
+Only `aarch64-darwin` is supported. Swift 6.4, Apple SDK 27, SwiftPM and
+all build tools come from the locked nixpkgs input. No installed Xcode or
+Command Line Tools, host compiler lookup, proprietary macro plugins, or
+host signing tools are used. Keep the Nix sandbox enabled; do not use `--impure`.
 
 ```bash
-# Run directly
-nix run github:kekeqwq/KikiNavMap
+nix run github:kekeqwq/KikiNavMap --option sandbox true
 
-# Or build the .app bundle locally
-nix build
+nix build --option sandbox true
 open result/Applications/KikiNavMap.app
+
+# Build the app and run offline regression tests inside the sandbox
+nix flake check --option sandbox true
+
+# Development tests with the same Nix toolchain (no Xcode XCTest runner)
+nix develop --command swift test --build-system native --disable-xctest
 ```
 
-### Building with Swift CLI
+`nix run` copies the bundle to `~/Applications/KikiNavMap.app` before launch.
+`nix run .#app` opens the store bundle using macOS's runtime `open` service.
+The exported `overlays.default` provides `pkgs.kikinavmap`.
 
-```bash
-# Run unit test suite
-swift test
+### Flight import fix (1.1.1)
 
-# Build executable
-swift build -c release
-```
+Import is an in-window overlay, not a SwiftUI sheet. Successful import now
+only hides that overlay; it no longer invokes environment `dismiss()`, which
+could close the main window and terminate the application. Concurrent imports
+are blocked, invalid coordinates are discarded, and missing/invalid playback
+tracks produce an error instead of being re-fetched as KML. Tests use canned
+HTTP responses and do not depend on live flight-tracking services.
 
 ---
 

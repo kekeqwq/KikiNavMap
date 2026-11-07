@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct LiquidGlassToolbar: View {
     @ObservedObject var appState: AppState = .shared
-    @State private var hasCopied: Bool = false
+    @ViewState private var hasCopied = false
 
     public init() {}
 
